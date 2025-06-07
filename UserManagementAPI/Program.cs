@@ -134,6 +134,62 @@ app.MapDelete("/users/{id:int}", (int id) =>
     }
 });
 
+// Error-handling middleware (must be first)
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception)
+    {
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+        var error = new { error = "Internal server error." };
+        await context.Response.WriteAsJsonAsync(error);
+        // Optionally log the exception here
+    }
+});
+
+// Authentication middleware (must be second)
+app.Use(async (context, next) =>
+{
+    // Allow Swagger UI and OpenAPI endpoints without auth
+    var path = context.Request.Path.Value?.ToLower();
+    if (path != null && (path.StartsWith("/swagger") || path.StartsWith("/v3/openapi")))
+    {
+        await next();
+        return;
+    }
+    
+    if (!context.Request.Headers.TryGetValue("Authorization", out var authHeader) ||
+        !authHeader.ToString().StartsWith("Bearer "))
+    {
+        context.Response.StatusCode = 401;
+        await context.Response.WriteAsJsonAsync(new { error = "Unauthorized" });
+        return;
+    }
+    var token = authHeader.ToString()[7..];
+    // For demo: accept a hardcoded token (replace with real validation in production)
+    if (token != "mysecrettoken")
+    {
+        context.Response.StatusCode = 401;
+        await context.Response.WriteAsJsonAsync(new { error = "Unauthorized" });
+        return;
+    }
+    await next();
+});
+
+// Logging middleware (must be last)
+app.Use(async (context, next) =>
+{
+    var method = context.Request.Method;
+    var path = context.Request.Path;
+    await next();
+    var statusCode = context.Response.StatusCode;
+    Console.WriteLine($"{method} {path} => {statusCode}");
+});
+
 app.Run();
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
