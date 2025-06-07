@@ -4,3 +4,46 @@ GET {{UserManagementAPI_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+# Get all users
+GET {{UserManagementAPI_HostAddress}}/users
+Accept: application/json
+
+###
+
+# Create a new user
+POST {{UserManagementAPI_HostAddress}}/users
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john.doe@example.com",
+  "department": "IT"
+}
+
+###
+
+# Get user by ID (replace 1 with actual user ID)
+GET {{UserManagementAPI_HostAddress}}/users/1
+Accept: application/json
+
+###
+
+# Update user by ID (replace 1 with actual user ID)
+PUT {{UserManagementAPI_HostAddress}}/users/1
+Content-Type: application/json
+
+{
+  "firstName": "Jane",
+  "lastName": "Doe",
+  "email": "jane.doe@example.com",
+  "department": "HR"
+}
+
+###
+
+# Delete user by ID (replace 1 with actual user ID)
+DELETE {{UserManagementAPI_HostAddress}}/users/1
+
+###

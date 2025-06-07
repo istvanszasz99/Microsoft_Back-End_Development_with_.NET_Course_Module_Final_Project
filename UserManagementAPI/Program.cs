@@ -1,3 +1,6 @@
+using UserManagementAPI.Models;
+using System.Collections.Concurrent;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -32,6 +35,42 @@ app.MapGet("/weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast");
+
+// In-memory user store
+var users = new ConcurrentDictionary<int, User>();
+var nextId = 1;
+
+// CRUD Endpoints
+
+// GET all users
+app.MapGet("/users", () => users.Values);
+
+// GET user by ID
+app.MapGet("/users/{id:int}", (int id) =>
+    users.TryGetValue(id, out var user) ? Results.Ok(user) : Results.NotFound());
+
+// POST create user
+app.MapPost("/users", (User user) =>
+{
+    user.Id = nextId++;
+    users[user.Id] = user;
+    return Results.Created($"/users/{user.Id}", user);
+});
+
+// PUT update user
+app.MapPut("/users/{id:int}", (int id, User updatedUser) =>
+{
+    if (!users.ContainsKey(id)) return Results.NotFound();
+    updatedUser.Id = id;
+    users[id] = updatedUser;
+    return Results.Ok(updatedUser);
+});
+
+// DELETE user
+app.MapDelete("/users/{id:int}", (int id) =>
+{
+    return users.TryRemove(id, out _) ? Results.NoContent() : Results.NotFound();
+});
 
 app.Run();
 
